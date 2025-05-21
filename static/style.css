@@ -1,0 +1,182 @@
+/* Base Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #7f8c8d;
+    font-size: 1.1em;
+}
+
+/* Auto Capture Section */
+.auto-capture {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.webcam-container {
+    width: 50%;
+    max-width: 800px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.webcam-feed {
+    width: 100%;
+    display: block;
+    background-color: #000;
+}
+
+.results-container {
+    width: 100%;
+    max-width: 800px;
+}
+
+.result-card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.result-card h2 {
+    color: #2c3e50;
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
+    align-items: center;
+}
+
+.result-label {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 1.1em;
+}
+
+.result-value {
+    font-size: 1.1em;
+    color: #333;
+}
+
+.confidence-value {
+    font-size: 1.5em;
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.care-instructions {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 15px;
+    border-left: 4px solid #3498db;
+    font-size: 1.1em;
+    line-height: 1;
+    white-space: pre-line;
+}
+
+
+/* Footer */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .auto-capture {
+        flex-direction: column;
+    }
+    
+    .webcam-container {
+        width: 50%;
+    }
+
+    .results-container {
+        width: 100%;
+    }
+    .result-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
+
+@keyframes highlight {
+    0% { background-color: rgba(46, 204, 113, 0.1); }
+    100% { background-color: white; }
+}
+
+.snapshot-preview {
+    margin: 20px 0;
+    text-align: center;
+}
+.snapshot-preview img {
+    max-width: 30%;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.sustainability-recommendations {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border-left: 4px solid #2ecc71;
+}
+
+.recommendation-card {
+    background: white;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.recommendation-card h4 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.recommendation-card p {
+    margin-bottom: 0;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+

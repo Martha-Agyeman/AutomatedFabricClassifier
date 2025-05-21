@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Fabric Detection</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Automated Fabric Detection System</h1>
+            <p class="subtitle">Place fabric under the scanner for automatic detection</p>
+        </header>
+
+        <main>
+            <div class="auto-capture">
+                <div class="webcam-container">
+                    <img src="{{ url_for('video_feed') }}" class="webcam-feed" alt="Live Camera Feed">
+                </div>
+                
+                <div class="results-container">
+                    <div class="result-card">
+                        <h2>Detection Results</h2>
+                                                
+                        <div class="results">
+                            {% if prediction and prediction.error %}
+                                <div class="error">
+                                    <p>Error: {{ prediction.error }}</p>
+                                    {% if prediction.snapshot %}
+                                        <img src="{{ url_for('static', filename=prediction.snapshot) }}" alt="Captured Image">
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="fabric-result">
+                                    <h3>Fabric: 
+                                        {% if prediction and prediction.fabric and prediction.fabric.type %}
+                                            {{ prediction.fabric.type }} ({{ prediction.fabric.confidence }})
+                                        {% else %}
+                                            Not detected
+                                        {% endif %}
+                                    </h3>
+                                </div>
+                                
+                                <div class="clothing-result">
+                                    <h3>Clothing: 
+                                        {% if prediction and prediction.clothing and prediction.clothing.type %}
+                                            {{ prediction.clothing.type }} ({{ prediction.clothing.confidence }})
+                                        {% else %}
+                                            Not detected
+                                        {% endif %}
+                                    </h3>
+                                </div>
+                                
+                                <div class="sustainability-recommendations">
+                                    <h3>Sustainability Recommendations</h3>
+                                    <div id="recommendations-container">
+                                        {% if prediction and prediction.recommendations %}
+                                            {% for rec in prediction.recommendations %}
+                                                <div class="recommendation-card">
+                                                    <h4>{{ rec.instructions }}</h4>
+                                                    <p>Difficulty: {{ rec.difficulty }}</p>
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p>No sustainability recommendations available</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="care-instructions">
+                                    <h4>Care Instructions:</h4>
+                                    <p>{{ prediction.care if prediction and prediction.care else 'Not available' }}</p>
+                                </div>
+                                
+                                {% if prediction and prediction.snapshot %}
+                                <div class="snapshot">
+                                    <img src="{{ url_for('static', filename=prediction.snapshot) }}" alt="Captured Image">
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Fabric Detection System &copy; 2023</p>
+        </footer>
+    </div>
+
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const socket = io({
+            reconnection: true,
+            reconnectionAttempts: 3,
+            reconnectionDelay: 1000
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('Connection error:', err);
+        });
+
+        socket.on('update_prediction', function(data) {
+            console.log("Received update:", data);
+            
+            try {
+                // Update fabric information
+                const fabricElement = document.querySelector('.fabric-result h3');
+                if (fabricElement) {
+                    fabricElement.textContent = data.fabric?.type 
+                        ? `Fabric: ${data.fabric.type} (${data.fabric.confidence})` 
+                        : 'Fabric: Not detected';
+                }
+                
+                // Update clothing information
+                const clothingElement = document.querySelector('.clothing-result h3');
+                if (clothingElement) {
+                    clothingElement.textContent = data.clothing?.type 
+                        ? `Clothing: ${data.clothing.type} (${data.clothing.confidence})` 
+                        : 'Clothing: Not detected';
+                }
+                
+                // Update care instructions
+                const careElement = document.querySelector('.care-instructions p');
+                if (careElement) {
+                    careElement.textContent = data.care || 'Not available';
+                }
+                
+                // Update snapshot if available
+                if (data.snapshot) {
+                    const snapshotElement = document.querySelector('.snapshot img');
+                    if (snapshotElement) {
+                        snapshotElement.src = `/static/${data.snapshot}?t=${Date.now()}`;
+                        snapshotElement.style.display = 'block';
+                    }
+                }
+                
+                const resultCard = document.querySelector('.result-card');
+                if (resultCard) {
+                    resultCard.style.animation = 'none';
+                    void resultCard.offsetWidth; 
+                    resultCard.style.animation = 'highlight 0.5s';
+                }
+            } catch (error) {
+                console.error('Error updating prediction:', error);
+            }
+        });
+        
+        socket.on('prediction_error', function(data) {
+            console.error("Prediction error:", data);
+            try {
+                const errorElement = document.querySelector('.error');
+                if (!errorElement) return;
+                
+                const errorText = errorElement.querySelector('p');
+                if (errorText) {
+                    errorText.textContent = `Error: ${data.error || 'Unknown error'}`;
+                }
+                
+                if (data.snapshot) {
+                    const img = errorElement.querySelector('img');
+                    if (img) {
+                        img.src = `/static/${data.snapshot}?t=${Date.now()}`;
+                        img.style.display = 'block';
+                    }
+                }
+                
+                errorElement.style.display = 'block';
+            } catch (error) {
+                console.error('Error handling prediction error:', error);
+            }
+        });
+
+        socket.on('update_prediction', async function(data) {
+            console.log("Received update:", data);
+            
+            
+            if (data.fabric?.type && data.clothing?.type) {
+                try {
+                    const response = await fetch(`/get_recommendations/${encodeURIComponent(data.fabric.type)}/${encodeURIComponent(data.clothing.type)}`);
+                    const recommendations = await response.json();
+                    
+                    const container = document.getElementById('recommendations-container');
+                    if (recommendations.length > 0) {
+                        container.innerHTML = recommendations.map(rec => `
+                            <div class="recommendation-card">
+                                <h4>${rec.instructions}</h4>
+                                <p>Difficulty: ${rec.difficulty}</p>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = '<p>No sustainability recommendations available</p>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching recommendations:', error);
+                    document.getElementById('recommendations-container').innerHTML = 
+                        '<p>Could not load recommendations</p>';
+                }
+            }
+        });
+
+        socket.on('refresh_page', function() {
+            try {
+                const resultsContainer = document.querySelector('.results-container');
+                if (!resultsContainer) return;
+                
+                // Add loading state
+                resultsContainer.style.opacity = '0.5';
+                resultsContainer.style.transition = 'opacity 0.3s ease';
+                
+                setTimeout(() => {
+                    fetch(window.location.href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.text();
+                    })
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newResults = doc.querySelector('.results-container');
+                        
+                        if (newResults) {
+                            resultsContainer.innerHTML = newResults.innerHTML;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Refresh failed:', error);
+                        resultsContainer.style.opacity = '1';
+                    });
+                }, 300);
+            } catch (error) {
+                console.error('Error during refresh:', error);
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
